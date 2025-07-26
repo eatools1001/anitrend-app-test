@@ -1,32 +1,33 @@
-name: android-unit-test
+name: Build APK
 
 on:
   push:
-    branches: [ develop ]
-  pull_request:
-    branches:
-      - '*'
+    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
-  android-unit-test:
+  build:
+    name: Build Release APK
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - name: set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'zulu'
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          cache-read-only: ${{ github.ref != 'refs/heads/develop' }}
-      - name: Configure properties
-        run: bash .github/scripts/setup-config.sh
-      - name: Test with Gradle
-        run: ./gradlew test --stacktrace
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v5
-        if: always() # always run even if the previous step fails
-        with:
-          report_paths: '**/build/test-results/**/TEST-*.xml'
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Grant execute permission to gradlew
+      run: chmod +x ./gradlew
+
+    - name: Build release APK
+      run: ./gradlew assembleRelease
+
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: anitrend-release-apk
+        path: app/build/outputs/apk/release/app-release.apk
